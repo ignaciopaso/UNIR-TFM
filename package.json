@@ -1,0 +1,20 @@
+{
+  "name": "unir-tfg",
+  "version": "1.0.0",
+  "description": "Documentación y código trabajo de inal de Master Inteligencia Artificial en UNIR. 2024.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "unir-tfg": "file:"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.4"
+  }
+}
