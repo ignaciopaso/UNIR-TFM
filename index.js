@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const { spawn } = require('child_process');
 
 // Middleware para parsear JSON
 app.use(express.json());
@@ -33,6 +34,65 @@ app.post('/cluster', (req, res) => {
   });
 });
 
+app.post('/predecir', (req, res) => {
+  const { cluster, features } = req.body;
+
+  // Llamar a la función que hace la predicción
+  predecirCluster(cluster, features, (err, prediccion) => {
+      if (err) {
+          return res.status(500).send({ error: err });
+      }
+      res.send({ prediccion: prediccion });
+  });
+});
+
+// Función para predecir usando el modelo del clúster adecuado
+function predecirCluster(cluster, features, callback) {
+  // Cargar el script de Python y pasarle los datos
+  const pythonProcess = spawn('python', ['predict_cluster.py']);
+
+  // Preparar los datos a enviar al script
+  const data = JSON.stringify({ cluster: cluster, features: features });
+
+  // Enviar los datos al script Python
+  pythonProcess.stdin.write(data);
+  pythonProcess.stdin.end();
+
+  // Recibir la predicción de vuelta
+  pythonProcess.stdout.on('data', (data) => {
+      const prediccion = JSON.parse(data.toString());
+      callback(null, prediccion);
+  });
+
+  // Manejar errores
+  pythonProcess.stderr.on('data', (data) => {
+      callback(data.toString(), null);
+  });
+}
+
+// Función de optimización básica
+function optimizarPrecio(ocupacionPredicha, precioBase) {
+  let precio;
+  if (ocupacionPredicha < 0.5) {
+      precio = precioBase * 0.9; // 10% de descuento
+  } else if (ocupacionPredicha >= 0.5 && ocupacionPredicha < 0.8) {
+      precio = precioBase * 1.1; // 10% de incremento
+  } else {
+      precio = precioBase * 1.25; // 25% de incremento
+  }
+  return precio;
+}
+
+// Endpoint para calcular el precio optimizado
+app.post('/optimizar-precio', (req, res) => {
+  const { ocupacionPredicha, precioBase } = req.body;
+
+  // Calcular el precio optimizado
+  const precioOptimizado = optimizarPrecio(ocupacionPredicha, precioBase);
+
+  // Enviar el resultado
+  res.json({ precioOptimizado });
+});
 
 // Configuración del puerto de escucha
 const PORT = process.env.PORT || 3000;
