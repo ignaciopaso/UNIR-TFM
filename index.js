@@ -34,11 +34,22 @@ app.post('/cluster', (req, res) => {
   });
 });
 
-app.post('/predecir', (req, res) => {
+app.post('/predecirOcupacion', (req, res) => {
   const { cluster, features } = req.body;
 
   // Llamar a la función que hace la predicción
-  predecirCluster(cluster, features, (err, prediccion) => {
+  predecirCluster(cluster, features, 0, (err, prediccion) => {
+      if (err) {
+          return res.status(500).send({ error: err });
+      }
+      res.send({ prediccion: prediccion });
+  });
+});
+app.post('/predecirPrecio', (req, res) => {
+  const { cluster, features } = req.body;
+
+  // Llamar a la función que hace la predicción
+  predecirCluster(cluster, features, 1, (err, prediccion) => {
       if (err) {
           return res.status(500).send({ error: err });
       }
@@ -47,9 +58,14 @@ app.post('/predecir', (req, res) => {
 });
 
 // Función para predecir usando el modelo del clúster adecuado
-function predecirCluster(cluster, features, callback) {
+function predecirCluster(cluster, features, tipo, callback) {
   // Cargar el script de Python y pasarle los datos
-  const pythonProcess = spawn('python', ['predict_cluster.py']);
+  let pythonProcess = spawn('python', ['predict_cluster.py']);
+  if(tipo == 0){
+    pythonProcess = spawn('python', ['predict_cluster.py']);
+  }else if(tipo == 1){
+    pythonProcess = spawn('python', ['predict_cluster_prices.py']);
+  }
 
   // Preparar los datos a enviar al script
   const data = JSON.stringify({ cluster: cluster, features: features });
